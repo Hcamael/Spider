@@ -1,3 +1,5 @@
 .idea/
 test.py
 db/
+lib/*.pyc
+note.md
