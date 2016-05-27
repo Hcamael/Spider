@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 
-from data import conf
 from optparse import OptionParser
 from optparse import OptionGroup
+from lib.data import logger
+from data import conf
+import logging
 import sys
 import os
 import re
@@ -59,11 +61,12 @@ def oparser():
 
     # 进行输入参数初始化
     conf['url'] = (args.url if args.url else "http://sina.com.cn")
-    name = re.findall("[\w+\.]+", conf['url'])
+    name = re.findall("[\w\.-]+", conf['url'])
     try:
         conf['name'] = (name[1] if len(name) == 2 else name[0])
     except IndexError:
         errMsg = "url input error!"
+        logger.error("url matching fail!")
         parser.error(errMsg)
 
     conf['deep'] = (args.deep if args.deep else 2)
@@ -85,9 +88,30 @@ def oparser():
         errMsg = "loglevel value error(input 1-5)"
         parser.error(errMsg)
 
+    if conf['loglevel'] == 1:
+        loglevel = logging.CRITICAL
+    elif conf['loglevel'] == 2:
+        loglevel = logging.ERROR
+    elif conf['loglevel'] == 3:
+        loglevel = logging.WARN
+    elif conf['loglevel'] == 4:
+        loglevel = logging.INFO
+    elif conf['loglevel'] == 5:
+        loglevel = logging.DEBUG
+    else:
+        loglevel = logging.ERROR
+
     conf['logfile'] = (os.path.basename(args.logfile) if args.logfile \
                                                     else 'spider.log' if args.test \
                                                                         else conf['name']+".log")
+
+    f = open("log/" + conf['logfile'], 'a+')
+    Log_Handle = logging.StreamHandler(f)
+    FORMATTER = logging.Formatter("\r[%(asctime)s] [%(levelname)s] [%(thread)d] %(message)s", "%H:%M:%S")
+    Log_Handle.setFormatter(FORMATTER)
+    logger.addHandler(Log_Handle)
+    logger.setLevel(loglevel)
+
     conf['dbfile'] = (os.path.basename(args.dbfile) if args.dbfile else conf['name']+".db")
     conf['thread'] = (args.thread if args.thread else 10)
     if conf['thread'] < 0 or conf['thread'] > 50:
@@ -95,3 +119,5 @@ def oparser():
         # 最大值设为50
         errMsg = "thread value error (0-50, 0 means not use thread)"
         parser.error(errMsg)
+
+    logger.debug('parsing command line suc')

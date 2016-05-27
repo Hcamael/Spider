@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from data import operate
+from data import logger
 import threading
 import Queue
 import time
@@ -15,16 +16,37 @@ class SiThread(threading.Thread):
         self._queue = queue1
         self._result = queue2
         self._f = f
+        logger.info('init a thread')
 
     def run(self):
+        logger.debug("run a thread")
         while True:
             url = self._queue.get()
             if url == 'stop':
+                logger.info(str(threading.currentThread().ident) + " be stoped")
                 break
             r = self._f(url)
-            if r['type'] == 'html':
-                operate['db'].insert(r['html'], url)
             self._result.put(r)
+
+class DbThread(threading.Thread):
+    '''
+    INSERT数据库线程
+    '''
+    def __init__(self, queue1):
+        threading.Thread.__init__(self)
+        logger.debug("init a database thread....")
+        self._queue = queue1
+
+    def run(self):
+        while True:
+            r = self._queue.get()
+            if r == "stop":
+                logger.info("database thread be stoped")
+                break
+            if r['type'] == 'html':
+                operate['db'].insert(r['html'], r['url'])
+            else:
+                logger.warn("not a html page")
 
 
 class ThreadPool:
@@ -39,16 +61,27 @@ class ThreadPool:
         :param num: 线程数
         :param func: 函数
         '''
-
+        logger.info("init a thread pool class")
         self._queue = Queue.Queue()
         self._result = Queue.Queue()
+        self._dbqueue = Queue.Queue()
         self.pool = []
         self.num = num
+        # 线程池
         self.build_thread_pool(func)
+        # insert db 线程
+        self.dbt = DbThread(self._dbqueue)
+        self.dbt.start()
 
     def _del(self):
+        logger.info("destory thread pool")
         for x in xrange(self.num):
             self._queue.put('stop')
+        for t in self.pool:
+            t.join()
+        self._dbqueue.put('stop')
+        self.dbt.join()
+        logger.debug("destory thread pool suc")
 
     def build_thread_pool(self, f):
         '''
@@ -56,7 +89,7 @@ class ThreadPool:
         :param f: 函数(非通用,仅支持单参数)
         :return: 线程池列表
         '''
-
+        logger.info("build thread pool, and the number is " + str(self.num))
         for x in xrange(self.num):
             pool = SiThread(self._queue, self._result, f)
             pool.start()
@@ -71,8 +104,14 @@ class ThreadPool:
         result = []
 
         if isinstance(arg, type([])):
+            logger.debug("start a map function, and input the url number is %s" %(len(arg)))
             for a in arg:
                 self._queue.put(a)
-                result.append(self._result.get())
-
+            for a in arg:
+                r = self._result.get()
+                self._dbqueue.put(r)
+                result.append(r)
+            logger.debug("over a map function")
+        else:
+            logger.error("the arg is not a list!!!")
         return result
