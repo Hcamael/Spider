@@ -52,7 +52,11 @@ class SpiderControl:
         if operate['db'].deep == 0:
             logger.info("spidering deep == 0 page")
             r = self.get_html(self.url)
-            html = r['html']
+            try:
+                html = r['html']
+            except:
+                print "url input error!"
+                logger.error("url error(%s)" %url)
             operate['db'].insert(html, self.url)
             self.r_group.append(r)
             operate['db'].deep += 1

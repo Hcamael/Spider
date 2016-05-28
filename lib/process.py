@@ -16,7 +16,7 @@ class ShowProcess:
         初始化当前深度, 正常情况下是从0开始
         '''
         logger.info("init process~")
-        print "=== 当前进度为："
+        print u"=== 当前进度为："
         self.deep = 0
         self._pbar = click.progressbar(length=1, label="deep 0 : ")
 
