@@ -63,15 +63,22 @@ class SpiderControl:
         else:
             logger.info("spidering deep = %s" %operate['db'].deep)
             tmp = []
+            url_group = []
+
+            # 从上一个deep爬取的页面中提取url
             for x in self.r_group:
                 html = x['html']
-                url_group = self.find_url(html)
-                result_list = self._thread.my_map(url_group)
-                for y in xrange(len(result_list)):
-                    if result_list[y]['type'] == 'html':
-                        tmp.append(result_list[y])
-                    else:
-                        logger.debug("delete the not html page (%s)" %url_group[y])
+                url_group.extend(self.find_url(html))
+                logger.debug("from %s page find %s url" %(x['url'], len(url_group)))
+
+            # 把提取出来的url丢入线程池中
+            result_list = self._thread.my_map(url_group)
+            for y in xrange(len(result_list)):
+                if result_list[y]['type'] == 'html':
+                    tmp.append(result_list[y])
+                else:
+                    logger.debug("delete the not html page (%s)" % url_group[y])
+
             self.r_group = tmp
             operate['db'].deep += 1
             self.recursion_deep()
@@ -120,9 +127,13 @@ class SpiderControl:
         result = {"type": None}
         logger.info("request a url: %s" %url)
         try:
-            req = requests.get(url, headers=header, timeout=3)
-        except:
-            logger.error(url + " @@ requests fail")
+            req = requests.get(url, headers=header, timeout=4)
+        except Exception, e:
+            try:
+                logger.error("%s @@ requests fail and the info is %s" %(url.encode('utf-8'), e))
+            except:
+                print url
+                print isinstance(url, unicode)
             return result
 
         if 'text/html' in req.headers['Content-Type']:

@@ -3,9 +3,12 @@
 
 from data import operate
 from data import logger
+from process import ShowProcess
 import threading
 import Queue
 import time
+
+stop = 0
 
 class SiThread(threading.Thread):
     '''
@@ -19,6 +22,8 @@ class SiThread(threading.Thread):
         logger.info('init a thread')
 
     def run(self):
+        global stop
+
         logger.debug("run a thread")
         while True:
             url = self._queue.get()
@@ -38,9 +43,11 @@ class DbThread(threading.Thread):
         self._queue = queue1
 
     def run(self):
+        global stop
+
         while True:
             r = self._queue.get()
-            if r == "stop":
+            if r == 'stop':
                 logger.info("database thread be stoped")
                 break
             if r['type'] == 'html':
@@ -72,10 +79,14 @@ class ThreadPool:
         # insert db 线程
         self.dbt = DbThread(self._dbqueue)
         self.dbt.start()
+        # 显示进度
+        self.process_bar = ShowProcess()
 
     def _del(self):
+        global stop
+
         logger.info("destory thread pool")
-        for x in xrange(self.num):
+        for x in self.pool:
             self._queue.put('stop')
         for t in self.pool:
             t.join()
@@ -107,6 +118,7 @@ class ThreadPool:
             logger.debug("start a map function, and input the url number is %s" %(len(arg)))
             for a in arg:
                 self._queue.put(a)
+            self.process_bar._run(len(arg), self._queue)
             for a in arg:
                 r = self._result.get()
                 self._dbqueue.put(r)

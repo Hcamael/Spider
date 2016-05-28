@@ -18,7 +18,7 @@ def oparser():
         设置, 初始化输入参数
     '''
     parser = OptionParser()
-    parser.version = "B0.1"
+    parser.version = "B0.8"
 
     parser.add_option("--version", "-v", dest="showVersion",
                       action="store_true",
@@ -54,8 +54,8 @@ def oparser():
         print "-- By Hcamael"
         exit(0)
 
-    if not ((args.url and args.deep) or args.test):
-        errMsg = "missing a mandatory option (-u, -d) or (--testself), "
+    if not (args.url or args.test):
+        errMsg = "missing a mandatory option (-u) or (--testself), "
         errMsg += "use -h for basic or -hh for advanced help"
         parser.error(errMsg)
 
@@ -76,8 +76,8 @@ def oparser():
         parser.error(errMsg)
 
     if conf['deep'] < 0:
-        # 0 为当前页面, 禁止小于0
-        errMsg = "The deep input error(0 <= deep <= 50)"
+        # 禁止小于0
+        errMsg = "The deep input error(0 < deep <= 50)"
         parser.error(errMsg)
 
     conf['test'] = args.test
@@ -107,6 +107,7 @@ def oparser():
 
     f = open("log/" + conf['logfile'], 'a+')
     Log_Handle = logging.StreamHandler(f)
+    # Log_Handle = logging.StreamHandler(sys.stdout)
     FORMATTER = logging.Formatter("\r[%(asctime)s] [%(levelname)s] [%(thread)d] %(message)s", "%H:%M:%S")
     Log_Handle.setFormatter(FORMATTER)
     logger.addHandler(Log_Handle)
