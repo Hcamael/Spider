@@ -1,9 +1,0 @@
-[15:48:29] [ERROR] [139741651527424] debug: now_length = 37; length = 47;
-[15:48:39] [ERROR] [139741651527424] debug: now_length = 0; length = 37;
-[15:48:40] [ERROR] [139741635487488] debug: now_length = 369; length = 379;
-[15:48:50] [ERROR] [139741635487488] debug: now_length = 308; length = 369;
-[15:49:00] [ERROR] [139741635487488] debug: now_length = 251; length = 308;
-[15:49:10] [ERROR] [139741635487488] debug: now_length = 159; length = 251;
-[15:49:20] [ERROR] [139741635487488] debug: now_length = 41; length = 159;
-[15:49:20] [ERROR] [139742171612928] http://twitter.com/typecho @@ requests fail and the info is HTTPConnectionPool(host='twitter.com', port=80): Max retries exceeded with url: /typecho (Caused by ConnectTimeoutError(<requests.packages.urllib3.connection.HTTPConnection object at 0x7f18505cff10>, 'Connection to twitter.com timed out. (connect timeout=4)'))
-[15:49:30] [ERROR] [139741635487488] debug: now_length = 0; length = 41;
