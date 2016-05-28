@@ -4,6 +4,7 @@
 from data import logger
 import threading
 import click
+import time
 
 __author__ = "Hcamael"
 
@@ -32,16 +33,17 @@ class ShowProcess:
         self.deep += 1
         logger.info("begin run deep %s process bar, the length is %s" % (self.deep, length))
         label = "deep %s: " %(self.deep)
-
+        self._queue = queue
+        self.length = length
         # 结束上一个进度条
         self._finish_pbar()
         # 新建一个进度条
         self._pbar = click.progressbar(length=length, label=label, show_percent=False, show_pos=True)
         # 每隔10s显示一次进度
-        timer = threading.Timer(0, self.timer, [queue, length])
-        timer.start()
+        self.t = threading.Thread(target=self.timer)
+        self.t.start()
 
-    def timer(self, queue, length):
+    def timer(self):
         '''
         根据队列来判断进度
         :param queue: URL队列
@@ -49,14 +51,16 @@ class ShowProcess:
         :return:
         '''
         bar = self._pbar
-        if bar.finished:
-            return
-        else:
-            logger.debug("complete: %s/%s" %(bar.length-queue.qsize(), bar.length))
-            now_lenth = queue.qsize()
+        length = self.length
+        while not bar.finished:
+            logger.debug("complete: %s/%s" %(bar.length-self._queue.qsize(), bar.length))
+            now_lenth = self._queue.qsize()
+            logger.error("debug: now_length = %s; length = %s;" %(now_lenth, length))
             bar.update(length-now_lenth)
-            timer = threading.Timer(10, self.timer, [queue, now_lenth])
-            timer.start()
+            length = now_lenth
+            time.sleep(10)
+            # self.t = threading.Timer(10, self.timer, [queue, now_lenth])
+            # self.t.start()
 
     def _finish_pbar(self):
         '''

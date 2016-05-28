@@ -7,7 +7,9 @@ from lib.data import logger
 from bs4 import BeautifulSoup
 from threadpool import ThreadPool
 import requests
+import signal
 import re
+import os
 
 __author__ = "Hcamael"
 
@@ -56,7 +58,9 @@ class SpiderControl:
                 html = r['html']
             except:
                 print "url input error!"
-                logger.error("url error(%s)" %url)
+                logger.error("url error(%s)" %(self.url))
+                return
+
             operate['db'].insert(html, self.url)
             self.r_group.append(r)
             operate['db'].deep += 1
@@ -75,6 +79,9 @@ class SpiderControl:
                 url_group.extend(self.find_url(html))
                 logger.debug("from %s page find %s url" %(x['url'], len(url_group)))
 
+            # 当页面没匹配出任何url, 则结束退出
+            if url_group == []:
+                return
             # 把提取出来的url丢入线程池中
             result_list = self._thread.my_map(url_group)
             for y in xrange(len(result_list)):
@@ -104,11 +111,12 @@ class SpiderControl:
             logger.error("bs4(html) fail!\nthe error info is : " + str(e))
             return
 
-        comp = re.compile("^(https?://)?[/\w\.-]*\?[\w&\+%=-]*")
+        comp = re.compile("^https?://[/\w\.-]*/?[\w&\+%=-]*")
 
         for x in bs.findAll('a'):
             try:
                 if comp.match(x['href']):
+                    logger.debug("%s match suc" %x['href'])
                     if x['href'] not in self.url_group:
                         url_group.append(x['href'])
             except KeyError:

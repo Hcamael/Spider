@@ -116,8 +116,12 @@ class ThreadPool:
 
         if isinstance(arg, type([])):
             logger.debug("start a map function, and input the url number is %s" %(len(arg)))
+            # 当一个深度结束再进行下一个深度? 要不然如何判断进度?
+            while not self._queue.empty():
+                print "wait..."
+                pass
             for a in arg:
-                self._queue.put(a)
+                    self._queue.put(a)
             self.process_bar._run(len(arg), self._queue)
             for a in arg:
                 r = self._result.get()
